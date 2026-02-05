@@ -16,12 +16,19 @@ const sending = ref(false)
 const messagesContainer = ref<HTMLElement>()
 const showDeleteConfirm = ref(false)
 const deleting = ref(false)
+const deletePassword = ref('')
+const deleteError = ref('')
 
 let refreshTimer: number | null = null
 let lastMessageCount = 0
+let isUpdating = false
 
 // 获取房间消息
 const fetchMessages = async (silent = false) => {
+  // 防止并发请求
+  if (isUpdating) return
+
+  isUpdating = true
   try {
     const roomId = route.params.roomId as string
     const data = await getRoomMessages(roomId)
@@ -38,6 +45,8 @@ const fetchMessages = async (silent = false) => {
     }
   } catch (error: any) {
     console.error('获取消息失败:', error)
+  } finally {
+    isUpdating = false
   }
 }
 
@@ -93,24 +102,32 @@ const scrollToBottom = () => {
 
 // 删除房间
 const handleDeleteRoom = async () => {
-  if (!confirm('确定要删除房间吗？删除后所有聊天记录将被清空！')) {
-    showDeleteConfirm.value = false
+  if (!deletePassword.value.trim()) {
+    deleteError.value = '请输入房间密令'
     return
   }
 
+  deleteError.value = ''
   deleting.value = true
+
   try {
     const roomId = route.params.roomId as string
-    await deleteRoom(roomId, chatStore.roomPassword)
+    await deleteRoom(roomId, deletePassword.value)
     alert('房间已删除')
     chatStore.clearRoomInfo()
     router.push('/room-auth')
   } catch (error: any) {
-    alert('删除失败: ' + error.message)
+    deleteError.value = error.message || '删除失败，请检查密令是否正确'
   } finally {
     deleting.value = false
-    showDeleteConfirm.value = false
   }
+}
+
+// 关闭删除弹窗
+const closeDeleteModal = () => {
+  showDeleteConfirm.value = false
+  deletePassword.value = ''
+  deleteError.value = ''
 }
 
 // 退出房间
@@ -147,10 +164,10 @@ onMounted(async () => {
   await fetchMessages()
   loading.value = false
 
-  // 每1秒刷新一次消息（静默模式，只在有新消息时更新）
+  // 每500ms刷新一次消息（静默模式，只在有新消息时更新）
   refreshTimer = window.setInterval(() => {
     fetchMessages(true)
-  }, 1000)
+  }, 500)
 })
 
 onUnmounted(() => {
@@ -232,16 +249,32 @@ onUnmounted(() => {
     </div>
 
     <!-- 删除确认弹窗 -->
-    <div v-if="showDeleteConfirm" class="modal-overlay" @click="showDeleteConfirm = false">
+    <div v-if="showDeleteConfirm" class="modal-overlay" @click="closeDeleteModal">
       <div class="modal-content" @click.stop>
         <h3>删除房间</h3>
-        <p>确定要删除这个房间吗？</p>
-        <p class="warning">⚠️ 删除后所有聊天记录将被永久清空！</p>
+        <p>⚠️ 删除后所有聊天记录将被永久清空！</p>
+        <p class="info-text">任何人都可以删除房间，请输入房间密令确认：</p>
+
+        <div class="form-group">
+          <input
+            v-model="deletePassword"
+            type="password"
+            class="input"
+            placeholder="请输入房间密令"
+            :disabled="deleting"
+            @keyup.enter="handleDeleteRoom"
+          />
+        </div>
+
+        <div v-if="deleteError" class="error-msg">
+          {{ deleteError }}
+        </div>
+
         <div class="modal-actions">
-          <button class="btn" @click="showDeleteConfirm = false" :disabled="deleting">
+          <button class="btn" @click="closeDeleteModal" :disabled="deleting">
             取消
           </button>
-          <button class="btn btn-danger" @click="handleDeleteRoom" :disabled="deleting">
+          <button class="btn btn-danger" @click="handleDeleteRoom" :disabled="deleting || !deletePassword.trim()">
             {{ deleting ? '删除中...' : '确认删除' }}
           </button>
         </div>
@@ -516,6 +549,12 @@ onUnmounted(() => {
   color: var(--text-secondary);
 }
 
+.modal-content .info-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
 .modal-content .warning {
   color: var(--danger-color);
   font-weight: 500;
@@ -523,6 +562,24 @@ onUnmounted(() => {
   background: #fff5f5;
   border-radius: 8px;
   margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group .input {
+  width: 100%;
+}
+
+.error-msg {
+  color: var(--danger-color);
+  font-size: 14px;
+  padding: 8px 12px;
+  background: #fff5f5;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border-left: 3px solid var(--danger-color);
 }
 
 .modal-actions {
