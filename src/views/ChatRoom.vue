@@ -49,15 +49,34 @@ const handleSendMessage = async () => {
   messageInput.value = ''
   sending.value = true
 
+  // 乐观更新：立即显示消息，不等待服务器响应
+  const optimisticMessage = {
+    id: `temp_${Date.now()}`,
+    roomId: route.params.roomId as string,
+    userId: chatStore.userId,
+    username: chatStore.username,
+    content,
+    timestamp: Date.now(),
+  }
+
+  // 立即添加到消息列表
+  messages.value = [...messages.value, optimisticMessage]
+  lastMessageCount = messages.value.length
+  await nextTick()
+  scrollToBottom()
+
   try {
     const roomId = route.params.roomId as string
-    // 发送消息后，后端返回完整的消息列表，立即更新界面
+    // 发送消息后，后端返回完整的消息列表，更新界面
     const updatedMessages = await sendMessage(roomId, content, chatStore.username, chatStore.userId)
     messages.value = updatedMessages
     lastMessageCount = updatedMessages.length
     await nextTick()
     scrollToBottom()
   } catch (error: any) {
+    // 发送失败，移除乐观添加的消息
+    messages.value = messages.value.filter(msg => msg.id !== optimisticMessage.id)
+    lastMessageCount = messages.value.length
     alert('发送失败: ' + error.message)
     messageInput.value = content
   } finally {
