@@ -193,7 +193,7 @@ async function handleSendMessage(request, env) {
   const url = new URL(request.url)
   const roomId = url.pathname.split('/')[3]
   const body = await request.json()
-  const { content, username } = body
+  const { content, username, userId } = body
 
   if (!content || !username) {
     return errorResponse('消息内容和用户名不能为空')
@@ -215,7 +215,7 @@ async function handleSendMessage(request, env) {
   const message = {
     id: generateId(),
     roomId,
-    userId: body.userId || generateId(),
+    userId: userId || generateId(),
     username,
     content,
     timestamp: Date.now(),
@@ -236,7 +236,8 @@ async function handleSendMessage(request, env) {
   room.messageCount = messages.length
   await env.CHAT_KV.put(`room:${roomId}`, JSON.stringify(room))
 
-  return successResponse(message, '消息发送成功')
+  // 返回完整消息列表，解决 KV 最终一致性问题
+  return successResponse(messages, '消息发送成功')
 }
 
 // 删除房间

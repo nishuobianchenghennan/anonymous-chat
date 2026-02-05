@@ -51,8 +51,12 @@ const handleSendMessage = async () => {
 
   try {
     const roomId = route.params.roomId as string
-    await sendMessage(roomId, content, chatStore.username, chatStore.userId)
-    await fetchMessages()
+    // 发送消息后，后端返回完整的消息列表，立即更新界面
+    const updatedMessages = await sendMessage(roomId, content, chatStore.username, chatStore.userId)
+    messages.value = updatedMessages
+    lastMessageCount = updatedMessages.length
+    await nextTick()
+    scrollToBottom()
   } catch (error: any) {
     alert('发送失败: ' + error.message)
     messageInput.value = content

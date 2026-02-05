@@ -23,7 +23,7 @@ export const getRoomMessages = (roomId: string) => {
 
 // 发送消息
 export const sendMessage = (roomId: string, content: string, username: string, userId: string) => {
-  return request.post<Message>(`/api/rooms/${roomId}/messages`, { content, username, userId })
+  return request.post<Message[]>(`/api/rooms/${roomId}/messages`, { content, username, userId })
 }
 
 // 删除房间
