@@ -18,10 +18,25 @@ export const useChatStore = defineStore('chat', () => {
     return `${randomAdj}${randomNoun}${randomNum}`
   }
 
-  // 初始化用户
+  // 初始化用户（从 localStorage 恢复或创建新用户）
   const initUser = () => {
-    userId.value = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    username.value = generateUsername()
+    // 尝试从 localStorage 恢复用户身份
+    const savedUserId = localStorage.getItem('chat_userId')
+    const savedUsername = localStorage.getItem('chat_username')
+
+    if (savedUserId && savedUsername) {
+      // 恢复已有身份
+      userId.value = savedUserId
+      username.value = savedUsername
+    } else {
+      // 创建新身份
+      userId.value = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      username.value = generateUsername()
+
+      // 保存到 localStorage
+      localStorage.setItem('chat_userId', userId.value)
+      localStorage.setItem('chat_username', username.value)
+    }
   }
 
   // 设置房间信息
@@ -35,6 +50,9 @@ export const useChatStore = defineStore('chat', () => {
     currentRoomId.value = ''
     roomPassword.value = ''
   }
+
+  // 初始化时自动恢复用户身份
+  initUser()
 
   return {
     userId,

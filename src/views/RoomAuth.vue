@@ -33,7 +33,6 @@ const handleCreateRoom = async () => {
 
   try {
     const room = await createRoom(roomPassword.value)
-    chatStore.initUser()
     chatStore.setRoomInfo(room.id, roomPassword.value)
     router.push(`/chat/${room.id}`)
   } catch (error: any) {
@@ -59,7 +58,6 @@ const handleJoinRoom = async () => {
 
   try {
     await joinRoom(roomId.value, roomPassword.value)
-    chatStore.initUser()
     chatStore.setRoomInfo(roomId.value, roomPassword.value)
     router.push(`/chat/${roomId.value}`)
   } catch (error: any) {

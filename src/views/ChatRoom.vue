@@ -18,15 +18,24 @@ const showDeleteConfirm = ref(false)
 const deleting = ref(false)
 
 let refreshTimer: number | null = null
+let lastMessageCount = 0
 
 // 获取房间消息
-const fetchMessages = async () => {
+const fetchMessages = async (silent = false) => {
   try {
     const roomId = route.params.roomId as string
     const data = await getRoomMessages(roomId)
-    messages.value = data
-    await nextTick()
-    scrollToBottom()
+
+    // 智能更新：只在消息数量变化时更新界面和滚动
+    if (data.length !== lastMessageCount) {
+      messages.value = data
+      lastMessageCount = data.length
+
+      if (!silent) {
+        await nextTick()
+        scrollToBottom()
+      }
+    }
   } catch (error: any) {
     console.error('获取消息失败:', error)
   }
@@ -42,7 +51,7 @@ const handleSendMessage = async () => {
 
   try {
     const roomId = route.params.roomId as string
-    await sendMessage(roomId, content, chatStore.username)
+    await sendMessage(roomId, content, chatStore.username, chatStore.userId)
     await fetchMessages()
   } catch (error: any) {
     alert('发送失败: ' + error.message)
@@ -115,10 +124,10 @@ onMounted(async () => {
   await fetchMessages()
   loading.value = false
 
-  // 每3秒刷新一次消息
+  // 每1秒刷新一次消息（静默模式，只在有新消息时更新）
   refreshTimer = window.setInterval(() => {
-    fetchMessages()
-  }, 3000)
+    fetchMessages(true)
+  }, 1000)
 })
 
 onUnmounted(() => {

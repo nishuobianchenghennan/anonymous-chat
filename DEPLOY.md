@@ -188,6 +188,7 @@ A:
 1. 查看 **Deployments** 中的构建日志
 2. 确保 package.json 中的依赖版本正确
 3. 检查是否有语法错误
+4. 如果遇到 `vue-tsc` 相关错误（如 "Search string not found"），说明 TypeScript 检查工具与 Node.js 版本不兼容。本项目已将构建命令改为 `vite build`（不包含类型检查），可以正常构建
 
 ---
 
