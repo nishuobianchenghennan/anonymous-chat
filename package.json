@@ -1,0 +1,25 @@
+{
+  "name": "anonymous-chat",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "deploy:worker": "cd worker && wrangler deploy",
+    "deploy:pages": "npm run build && wrangler pages deploy dist --project-name=anonymous-chat",
+    "deploy:all": "npm run deploy:worker && npm run deploy:pages"
+  },
+  "dependencies": {
+    "vue": "^3.4.15",
+    "vue-router": "^4.2.5",
+    "pinia": "^2.1.7",
+    "axios": "^1.6.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.3",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11",
+    "vue-tsc": "^1.8.27"
+  }
+}
