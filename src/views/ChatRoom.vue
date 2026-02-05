@@ -143,29 +143,30 @@ onUnmounted(() => {
 
 <template>
   <div class="chat-room">
-    <!-- 顶部导航栏 -->
-    <div class="chat-header">
-      <div class="header-left">
-        <div class="room-info">
-          <h3>匿名聊天室</h3>
-          <p class="room-id" @click="copyRoomId" title="点击复制">
-            房间ID: {{ route.params.roomId }}
-          </p>
+    <div class="chat-container">
+      <!-- 顶部导航栏 -->
+      <div class="chat-header">
+        <div class="header-left">
+          <div class="room-info">
+            <h3>匿名聊天室</h3>
+            <p class="room-id" @click="copyRoomId" title="点击复制">
+              房间ID: {{ route.params.roomId }}
+            </p>
+          </div>
+        </div>
+        <div class="header-right">
+          <span class="username">{{ chatStore.username }}</span>
+          <button class="btn-icon" @click="handleLeaveRoom" title="退出房间">
+            🚪
+          </button>
+          <button class="btn-icon btn-danger" @click="showDeleteConfirm = true" title="删除房间">
+            🗑️
+          </button>
         </div>
       </div>
-      <div class="header-right">
-        <span class="username">{{ chatStore.username }}</span>
-        <button class="btn-icon" @click="handleLeaveRoom" title="退出房间">
-          🚪
-        </button>
-        <button class="btn-icon btn-danger" @click="showDeleteConfirm = true" title="删除房间">
-          🗑️
-        </button>
-      </div>
-    </div>
 
-    <!-- 消息列表 -->
-    <div ref="messagesContainer" class="messages-container">
+      <!-- 消息列表 -->
+      <div ref="messagesContainer" class="messages-container">
       <div v-if="loading" class="loading">
         <div class="loading-spinner"></div>
         <p>加载中...</p>
@@ -209,6 +210,7 @@ onUnmounted(() => {
         </button>
       </form>
     </div>
+    </div>
 
     <!-- 删除确认弹窗 -->
     <div v-if="showDeleteConfirm" class="modal-overlay" @click="showDeleteConfirm = false">
@@ -234,8 +236,24 @@ onUnmounted(() => {
   width: 100%;
   height: 100vh;
   display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 聊天容器 - 悬浮卡片 */
+.chat-container {
+  width: 100%;
+  max-width: 450px;
+  height: 80vh;
+  max-height: 700px;
+  display: flex;
   flex-direction: column;
-  background: var(--bg-gray);
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
 }
 
 /* 顶部导航栏 */
@@ -243,10 +261,9 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 16px 20px;
   background: white;
   border-bottom: 1px solid var(--border-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .header-left {
@@ -501,6 +518,17 @@ onUnmounted(() => {
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .chat-room {
+    padding: 10px;
+    justify-content: center;
+  }
+
+  .chat-container {
+    max-width: 100%;
+    height: 90vh;
+    border-radius: 16px;
+  }
+
   .chat-header {
     padding: 12px 16px;
   }

@@ -94,6 +94,10 @@ export async function onRequest(context) {
       return await handleDeleteRoom(request, env)
     }
 
+    if (path === '/api/cleanup' && method === 'POST') {
+      return await handleCleanupAll(request, env)
+    }
+
     return errorResponse('接口不存在', 404)
   } catch (error) {
     console.error('Error:', error)
@@ -265,4 +269,40 @@ async function handleDeleteRoom(request, env) {
   await env.CHAT_KV.delete(`messages:${roomId}`)
 
   return successResponse(null, '房间删除成功')
+}
+
+// 清理所有房间（定时任务调用）
+async function handleCleanupAll(request, env) {
+  try {
+    // 验证系统密令（防止未授权调用）
+    const systemPassword = request.headers.get('X-System-Password')
+    if (systemPassword !== env.SYSTEM_PASSWORD) {
+      return errorResponse('系统密令验证失败', 401)
+    }
+
+    // 列出所有以 room: 开头的键
+    const roomsList = await env.CHAT_KV.list({ prefix: 'room:' })
+    const messagesList = await env.CHAT_KV.list({ prefix: 'messages:' })
+
+    // 删除所有房间
+    const deletePromises = []
+    for (const key of roomsList.keys) {
+      deletePromises.push(env.CHAT_KV.delete(key.name))
+    }
+
+    // 删除所有消息
+    for (const key of messagesList.keys) {
+      deletePromises.push(env.CHAT_KV.delete(key.name))
+    }
+
+    await Promise.all(deletePromises)
+
+    return successResponse({
+      deletedRooms: roomsList.keys.length,
+      deletedMessages: messagesList.keys.length
+    }, '清理完成')
+  } catch (error) {
+    console.error('清理失败:', error)
+    return errorResponse('清理失败: ' + error.message, 500)
+  }
 }

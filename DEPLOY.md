@@ -94,6 +94,31 @@ git push -u origin main
 
 ---
 
+## 🕐 配置定时清理（可选）
+
+系统支持每天自动清理所有聊天室，保护隐私。
+
+### 方法一：使用 GitHub Actions（推荐）
+
+1. 进入 GitHub 仓库的 **Settings** -> **Secrets and variables** -> **Actions**
+2. 添加以下 Secrets：
+   - `CLEANUP_URL`: 你的清理 API 地址（例如：`https://your-app.pages.dev/api/cleanup`）
+   - `SYSTEM_PASSWORD`: 你的系统密令（与 Cloudflare Pages 中设置的相同）
+3. GitHub Actions 会在每天北京时间 0:00 自动执行清理
+
+### 方法二：使用 Cloudflare Cron Triggers
+
+1. 修改 `functions/_worker.js` 中的域名为你的实际域名
+2. 在 Cloudflare Pages 项目中添加 Cron Trigger：
+   - 进入 **Settings** -> **Functions** -> **Cron Triggers**
+   - 添加触发器：`0 16 * * *`（UTC 16:00 = 北京时间 0:00）
+
+### 手动清理
+
+如果需要立即清理所有房间，可以在 GitHub Actions 中手动触发 `cleanup` 工作流。
+
+---
+
 ## 🎯 架构说明
 
 ### 前后端一体化部署
